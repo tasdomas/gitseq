@@ -1,0 +1,82 @@
+#!/bin/bash
+
+function check_in_repo {
+  if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1 ; then
+    echo "Not in a repo."
+    exit 1
+  fi
+}
+
+function get_top_branch {
+  PREFIX=$1
+  top=$(git branch --format='%(refname:short)' |\
+      grep -E "^$PREFIX[0-9]+\-" |\
+      sed "s/^$PREFIX//g" |\
+      cut -d '-' -f 1 |\
+      sort |\
+      tail -n 1)
+  echo $((top))
+}
+
+function get_branch_prefix {
+    if PREFIX=$(git config seq.prefix) ; then
+      echo $PREFIX
+    else
+       echo $USER
+    fi
+}
+
+function get_padding_len {
+    if L=$(git config seq.padding) ; then
+      echo $((L))
+    else
+       echo 3
+    fi
+}
+
+
+function run_help {
+  pn=$(basename $0)
+  echo "Usage: $pn <subcommand>"
+  echo "Subcommands:"
+  echo "  new <suffix>    Create new sequential branch."
+  echo "  config <prefix> [<padding>]"
+  echo ""
+}
+
+function run_new {
+  PREFIX=$(get_branch_prefix)
+  top=$(get_top_branch $PREFIX)
+  pad=$(get_padding_len)
+  num=$(printf "%0$((pad))d" "$((top+1))")
+  branch="$PREFIX$num-$1"
+  git checkout -b "$branch"
+}
+
+function run_config {
+  prefix=$1
+  padding=$2
+  if [ -n "$prefix" ]
+  then
+    git config seq.prefix "$prefix"
+  fi
+  if [ -n "$padding" ]
+  then
+    git config seq.padding "$padding"
+  fi
+}
+
+subcommand=$1
+case $subcommand in
+  "" | "-h" | "--help")
+    run_help
+    ;;
+  "new")
+    shift
+    run_new $1
+    ;;
+   config)
+     shift
+     run_config $1 $2
+     ;;
+esac
