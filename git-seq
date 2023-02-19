@@ -15,7 +15,11 @@ function get_top_branch {
       cut -d '-' -f 1 |\
       sort |\
       tail -n 1)
-  echo $((10#$top))
+  if [ -z "$top" ]; then
+      echo 0
+  else
+      echo $((10#$top))
+  fi
 }
 
 function get_branch_prefix {
