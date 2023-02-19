@@ -75,7 +75,7 @@ case $subcommand in
     shift
     run_new $1
     ;;
-   config)
+   "config")
      shift
      run_config $1 $2
      ;;
